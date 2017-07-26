@@ -1,0 +1,23 @@
+# Temporary definition for ldap import: Employees
+Set($LDAPHost,'yyy');
+Set($LDAPBase,'OU=Users,DC=yyy');
+Set($LDAPUser,'user');
+Set($LDAPPassword,'password');
+Set($LDAPFilter, 'objectClass=user');
+Set($LDAPMapping, {
+        Name         => 'sAMAccountName', # required
+        EmailAddress => 'mail',
+        RealName     => [qw/givenName sn/],
+        NickName     => 'givenName',
+        Organization => 'company',
+        });
+
+Set($LDAPGroupName,'Employees');
+Set($LDAPUpdateUsers,1);
+Set($LDAPGroupBase, 'OU=.Groups,OU=Users,DC=yyy');
+Set($LDAPGroupFilter, 'cn=*');
+Set($LDAPGroupMapping, {
+        Name               => 'cn',
+        Description        => 'name',
+        Member_Attr        => 'member',
+});

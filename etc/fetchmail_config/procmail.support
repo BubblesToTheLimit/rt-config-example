@@ -1,0 +1,76 @@
+SHELL=/bin/bash           # always always always always always always
+MAILDIR=$HOME/MyMail
+DEFAULT=$HOME/MyMail/prc.out
+VERBOSE=${VERBOSE:-yeah}
+LOGFILE     = $HOME/procmail.log
+LOGABSTRACT = "all"
+#Define getting the sender's address, discard any leading and trailing whitespaces
+FROM_=`formail -rt -xTo: \
+  | expand | sed -e 's/^[ ]*//g' -e 's/[ ]*$//g'`
+MAXSIZE=15728640
+REJECTED_FILE="procmail.support_rejected"
+MAILBOX="support@zzz.com"
+MAILBOXR="support@zzz\.com"
+MAILQUEUE="Support"
+
+# this is the prefered exit, if none of our filters meet just pass it on to RT
+:0:$HOME/procmail.lock
+* $ !^Cc.*${MAILBOX}
+* B ?? < $MAXSIZE
+| /opt/rt4/bin/rt-mailgate --url http://zzz --action correspond --queue $MAILQUEUE
+
+# this part saves the mail to "_rejected" file
+# two conditions are used such that the mail is only saved once
+:0c:$HOME/procmail.lock
+* B ?? > $MAXSIZE
+* $ !^Cc.*${MAILBOX}
+/home/rtracker/$REJECTED_FILE
+
+:0c:$HOME/procmail.lock
+* $ ^Cc.*${MAILBOX}
+* B ?? < $MAXSIZE
+/home/rtracker/$REJECTED_FILE
+
+#Simply send a notification back that the mail was too big
+:0
+* B ?? > $MAXSIZE
+* $ ! ^X-Loop: ${MAILBOXR}
+{
+  # Prepare and send the rejection, be sure to customize your sendmail path
+  :0i:$HOME/procmail.lock
+  | (formail -r -I"Subject: Rejected mail: Email size limit exceeded" \
+    -I "MIME-Version: 1.0" \
+    -I "Content-Type: text/html;" \
+    -I "Content-Transfer-Encoding: quoted-printable" \
+    -A "From: ${MAILBOX}" \
+    -A "Precendence: junk" \
+    -A "X-Loop: ${MAILBOX}" ; \
+    cat /home/rtracker/procmail-message-size ) \
+    | $SENDMAIL -t -oi
+}
+
+#Return email within the attachment limits
+:0
+* $ ^Cc.*${MAILBOX}
+* B ?? < $MAXSIZE
+* $ ! ^X-Loop: ${MAILBOXR}
+{
+  # Make a temporary file of the message to be returned
+  :0c:$HOME/procmail.lock  # Discard whitespaces, insert a leading blank
+  | expand > message.msg
+  # Prepare and send the rejection
+  # Be sure to customize your sendmail path
+  :0i:$HOME/procmail.lock
+  | (formail -r -I"Subject: Rejected mail: Addressed as CC" \
+    -I "MIME-Version: 1.0" \
+    -I "Content-Type: text/html;" \
+    -I "Content-Transfer-Encoding: quoted-printable" \
+    -A "From: ${MAILBOX}" \
+    -A "Precendence: junk" \
+    -A "X-Loop: ${MAILBOX}" ; \
+    cat /home/rtracker/procmail-message ; \
+    echo "<hr />" ; \
+    sed -n "/<html/,/<\/html>/p" message.msg ) \
+    | $SENDMAIL -t -oi
+}
+

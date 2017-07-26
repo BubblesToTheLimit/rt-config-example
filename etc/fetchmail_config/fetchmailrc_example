@@ -1,0 +1,15 @@
+poll	xxx
+proto	pop3
+user	"user"
+password	"password"
+is	"rtracker" here
+options
+fetchall
+nokeep
+#ssl
+#sslcertck sslcertpath /home/rtracker/.fetchmail/certs
+#sslproto 'SSL3'
+#mda "/opt/rt4/bin/rt-mailgate --url http://xxx --action correspond --queue Support"
+mda "IFS=' '&&exec /usr/bin/procmail -f- /home/rtracker/procmail.support||exit 75 #rtracker"
+set no syslog
+set logfile /var/log/fetchmail.log
