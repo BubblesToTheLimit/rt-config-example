@@ -1,0 +1,55 @@
+#+Title:  rt-config-example
+#+Author: Felix Brilej
+
+
+* About
+  In this config i showcase a working request tracker config i developed over the course of more
+  than a year. I think there are not enough configs out there, so people can have a working
+  installation of request-tracker quickly.
+
+  Another interesting config part is of course in the "scrips", which are configured in the
+  web-interface. These are not featured here yet.
+
+  Notes on the files in this repository:
+  - README.org
+  - etc
+    - apache2_config
+      - sites-available:
+        - request-tracker.conf
+    - fetchmail_config
+      - fetchmailrc_example
+        - =one account is featured, note the "mda" part, we can either pipe directly into the
+          request-tracker or first into procmail. procmail then filters the mails first.=
+      - procmail-message
+        - =sample return message for mail that addresses the ticketsystem in cc=
+      - procmail-message-size
+        - =sample return message for mail that is too big=
+      - procmail.support
+        - =procmail sample config which filters for big attachments and mails which address the
+          ticketsystem in CC=
+    - rt4_config
+      - RT_SiteConfig.pm
+        - =basic configuration=
+      - RT_SiteConfig.d
+        - LDAP_Basics.pm
+          - =basic ldap configuration of both ADs (yes, we have two)=
+        - LDAP_Groupimport_customers.pm
+          - =group import setting of customer AD that should always be up-to-date (only one AD can
+            be configured for groupimport at a time, the customer AD has priority with this)=
+        - LDAP_Groupimport_employees.pm_disabled
+          - =group import setting of employee AD that only has to be imported every now and then=
+        - Mailing.pm
+  - scripts:
+    - log-scripts
+      - =dont scroll through endless logs - use scripts to filter them!=
+      - filter_fetchmail_log.sh
+        - =contains possible errors while fetching mail=
+      - filter_rt_log.sh
+        - =contains unfiltered errors which should be looked at frequently=
+      - slowest_query.sh
+        - =when performance declines (ticket loading times of up to 8 seconds)you can log slow
+          mysql queries to determine the root of the problem=
+    - rtracker-maintenance-scripts
+      - import_employees.sh
+        - =a script that imports the employee groups every now and then since only one AD group
+          can get synchronized at a time and we have 2 ADs with the customer AD having priority=
